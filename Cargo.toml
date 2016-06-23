@@ -1,0 +1,11 @@
+[package]
+name = "xoroshiro"
+version = "0.0.1"
+authors = ["Vinzent Steinberg <Vinzent.Steinberg@gmail.com>"]
+license = "MIT/Apache-2.0"
+repository = "https://github.com/vks/xoroshiro"
+description = "Rust implementation of the Xoroshiro+ random number generator"
+keywords = ["random", "rng"]
+
+[dependencies]
+rand = "0.3"
