@@ -10,7 +10,11 @@ const RAND_BENCH_BYTES: usize = 1_000_000;
 use std::mem::size_of;
 use test::{black_box, Bencher};
 use rand::{XorShiftRng, IsaacRng, Isaac64Rng, Rng, OsRng};
-use xoroshiro::{XoroShiroRng, SplitMixRng, XorShift1024Rng, AesRng};
+use xoroshiro::{XoroShiroRng, SplitMixRng, XorShift1024Rng};
+
+mod aes;
+
+use aes::AesRng;
 
 macro_rules! make_bench_u64 {
     ($name:ident, $rng:ident) => {

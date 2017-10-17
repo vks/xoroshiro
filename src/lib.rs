@@ -2,10 +2,6 @@ extern crate rand;
 
 use rand::{Rng, SeedableRng, Rand};
 
-mod aes;
-
-pub use aes::AesRng;
-
 /// A splitmix random number generator.
 ///
 /// The splitmix algorithm is not suitable for cryptographic purposes, but is
