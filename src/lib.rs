@@ -5,7 +5,7 @@ use rand::{Rng, SeedableRng, Rand};
 /// A splitmix random number generator.
 ///
 /// The splitmix algorithm is not suitable for cryptographic purposes, but is
-/// very fast and has a 64 bit state.  Usually `XoroShiroRng128` should be prefered.
+/// very fast and has a 64 bit state.  Usually `XoroShiroRng` should be prefered.
 /// If you do not know for sure that it fits your requirements, use a more
 /// secure one such as `IsaacRng` or `OsRng`.
 ///
@@ -83,23 +83,23 @@ impl Rand for SplitMixRng {
 /// David Blackman and Sebastiano Vigna.
 #[allow(missing_copy_implementations)]
 #[derive(Debug, Clone)]
-pub struct XoroShiroRng128 {
+pub struct XoroShiroRng {
     s0: u64,
     s1: u64,
 }
 
-impl XoroShiroRng128 {
-    /// Creates a new `XoroShiroRng128` instance which is not seeded.
+impl XoroShiroRng {
+    /// Creates a new `XoroShiroRng` instance which is not seeded.
     ///
     /// The initial values of this RNG are constants, so all generators created
     /// by this function will yield the same stream of random numbers. It is
     /// highly recommended that this is created through `SeedableRng` instead of
     /// this function.
-    pub fn new_unseeded() -> XoroShiroRng128 {
+    pub fn new_unseeded() -> XoroShiroRng {
         // These constants were taken from the `XorShiftRng` implementation.
         // The only requirement imposed by the algorithm is that these values
         // cannot be zero everywhere.
-        XoroShiroRng128 {
+        XoroShiroRng {
             s0: 0x193a6754a8a7d469,
             s1: 0x97830e05113ba7bb,
         }
@@ -115,9 +115,9 @@ impl XoroShiroRng128 {
     /// # extern crate xoroshiro;
     /// # fn main() {
     /// use rand::SeedableRng;
-    /// use xoroshiro::XoroShiroRng128;
+    /// use xoroshiro::XoroShiroRng;
     ///
-    /// let rng1 = XoroShiroRng128::from_seed(0);
+    /// let rng1 = XoroShiroRng::from_seed(0);
     /// let mut rng2 = rng1.clone();
     /// rng2.jump();
     /// let mut rng3 = rng2.clone();
@@ -142,10 +142,11 @@ impl XoroShiroRng128 {
     }
 }
 
-impl Rng for XoroShiroRng128 {
+impl Rng for XoroShiroRng {
     #[inline]
     fn next_u32(&mut self) -> u32 {
         self.next_u64() as u32
+        // TODO use high bits, since the two lowest bits are weak
     }
 
     #[inline]
@@ -158,22 +159,22 @@ impl Rng for XoroShiroRng128 {
     }
 }
 
-impl SeedableRng<[u64; 2]> for XoroShiroRng128 {
-    /// Reseed an `XoroShiroRng128`.  This will panic if `seed` is entirely 0.
+impl SeedableRng<[u64; 2]> for XoroShiroRng {
+    /// Reseed an `XoroShiroRng`.  This will panic if `seed` is entirely 0.
     fn reseed(&mut self, seed: [u64; 2]) {
         assert!(seed != [0, 0],
-            "XoroShiroRng128.reseed called with an all zero seed.");
+            "XoroShiroRng.reseed called with an all zero seed.");
 
         self.s0 = seed[0];
         self.s1 = seed[1];
     }
 
-    /// Create a new `XoroShiroRng128`.  This will panic if `seed` is entirely 0.
-    fn from_seed(seed: [u64; 2]) -> XoroShiroRng128 {
+    /// Create a new `XoroShiroRng`.  This will panic if `seed` is entirely 0.
+    fn from_seed(seed: [u64; 2]) -> XoroShiroRng {
         assert!(seed != [0, 0],
-            "XoroShiroRng128::from_seed called with an all zero seed.");
+            "XoroShiroRng::from_seed called with an all zero seed.");
 
-        XoroShiroRng128 {
+        XoroShiroRng {
             s0: seed[0],
             s1: seed[1],
         }
@@ -189,23 +190,23 @@ fn generate_seed_128<R: Rng>(rng: &mut R) -> [u64; 2] {
     s
 }
 
-impl SeedableRng<u64> for XoroShiroRng128 {
-    /// Reseed an `XoroShiroRng128`.  This will use `SplitMixRng` to fill the seed.
+impl SeedableRng<u64> for XoroShiroRng {
+    /// Reseed an `XoroShiroRng`.  This will use `SplitMixRng` to fill the seed.
     fn reseed(&mut self, seed: u64) {
         let mut rng = SplitMixRng::from_seed(seed);
         self.reseed(generate_seed_128(&mut rng));
     }
 
-    /// Create a new `XoroShiroRng128`.  This will use `SplitMixRng` to fill the seed.
-    fn from_seed(seed: u64) -> XoroShiroRng128 {
+    /// Create a new `XoroShiroRng`.  This will use `SplitMixRng` to fill the seed.
+    fn from_seed(seed: u64) -> XoroShiroRng {
         let mut rng = SplitMixRng::from_seed(seed);
-        XoroShiroRng128::from_seed(generate_seed_128(&mut rng))
+        XoroShiroRng::from_seed(generate_seed_128(&mut rng))
     }
 }
 
-impl Rand for XoroShiroRng128 {
-    fn rand<R: Rng>(rng: &mut R) -> XoroShiroRng128 {
-        XoroShiroRng128::from_seed(generate_seed_128(rng))
+impl Rand for XoroShiroRng {
+    fn rand<R: Rng>(rng: &mut R) -> XoroShiroRng {
+        XoroShiroRng::from_seed(generate_seed_128(rng))
     }
 }
 
@@ -220,20 +221,20 @@ impl Rand for XoroShiroRng128 {
 /// Sebastiano Vigna.
 #[allow(missing_copy_implementations)]
 #[derive(Debug, Clone)]
-pub struct XorShiftRng1024 {
+pub struct XorShift1024Rng {
     s: [u64; 16],
     p: usize,
 }
 
-impl XorShiftRng1024 {
-    /// Creates a new `XorShiftRng1024` instance which is not seeded.
+impl XorShift1024Rng {
+    /// Creates a new `XorShift1024Rng` instance which is not seeded.
     ///
     /// The initial values of this RNG are constants, so all generators created
     /// by this function will yield the same stream of random numbers. It is
     /// highly recommended that this is created through `SeedableRng` instead of
     /// this function.
-    pub fn new_unseeded() -> XorShiftRng1024 {
-        XorShiftRng1024::from_seed(0)
+    pub fn new_unseeded() -> XorShift1024Rng {
+        XorShift1024Rng::from_seed(0)
     }
 
     /// Jump forward, equivalently to 2^512 calls to `next_u64()`.
@@ -246,9 +247,9 @@ impl XorShiftRng1024 {
     /// # extern crate xoroshiro;
     /// # fn main() {
     /// use rand::SeedableRng;
-    /// use xoroshiro::XorShiftRng1024;
+    /// use xoroshiro::XorShift1024Rng;
     ///
-    /// let rng1 = XorShiftRng1024::from_seed(0);
+    /// let rng1 = XorShift1024Rng::from_seed(0);
     /// let mut rng2 = rng1.clone();
     /// rng2.jump();
     /// let mut rng3 = rng2.clone();
@@ -281,7 +282,7 @@ impl XorShiftRng1024 {
     }
 }
 
-impl Rng for XorShiftRng1024 {
+impl Rng for XorShift1024Rng {
     #[inline]
     fn next_u32(&mut self) -> u32 {
         self.next_u64() as u32
@@ -298,8 +299,8 @@ impl Rng for XorShiftRng1024 {
     }
 }
 
-impl SeedableRng<[u64; 16]> for XorShiftRng1024 {
-    /// Reseed an `XorShiftRng1024`.  This will panic if `seed` is entirely 0.
+impl SeedableRng<[u64; 16]> for XorShift1024Rng {
+    /// Reseed an `XorShift1024Rng`.  This will panic if `seed` is entirely 0.
     fn reseed(&mut self, seed: [u64; 16]) {
         assert!(!seed.iter().all(|&x| x == 0),
             "XoroShiftRng1024.reseed called with an all zero seed.");
@@ -308,12 +309,12 @@ impl SeedableRng<[u64; 16]> for XorShiftRng1024 {
         self.p = 0;
     }
 
-    /// Create a new `XorShiftRng1024`.  This will panic if `seed` is entirely 0.
-    fn from_seed(seed: [u64; 16]) -> XorShiftRng1024 {
+    /// Create a new `XorShift1024Rng`.  This will panic if `seed` is entirely 0.
+    fn from_seed(seed: [u64; 16]) -> XorShift1024Rng {
         assert!(!seed.iter().all(|&x| x == 0),
-            "XorShiftRng1024::from_seed called with an all zero seed.");
+            "XorShift1024Rng::from_seed called with an all zero seed.");
 
-        XorShiftRng1024 {
+        XorShift1024Rng {
             s: seed,
             p: 0,
         }
@@ -329,22 +330,22 @@ fn generate_seed_1024<R: Rng>(rng: &mut R) -> [u64; 16] {
     s
 }
 
-impl SeedableRng<u64> for XorShiftRng1024 {
-    /// Reseed an `XorShiftRng1024`.  This will use `SplitMixRng` to fill the seed.
+impl SeedableRng<u64> for XorShift1024Rng {
+    /// Reseed an `XorShift1024Rng`.  This will use `SplitMixRng` to fill the seed.
     fn reseed(&mut self, seed: u64) {
         let mut rng = SplitMixRng::from_seed(seed);
         self.reseed(generate_seed_1024(&mut rng));
     }
 
-    /// Create a new `XorShiftRng1024`.  This will use `SplitMixRng` to fill the seed.
-    fn from_seed(seed: u64) -> XorShiftRng1024 {
+    /// Create a new `XorShift1024Rng`.  This will use `SplitMixRng` to fill the seed.
+    fn from_seed(seed: u64) -> XorShift1024Rng {
         let mut rng = SplitMixRng::from_seed(seed);
-        XorShiftRng1024::from_seed(generate_seed_1024(&mut rng))
+        XorShift1024Rng::from_seed(generate_seed_1024(&mut rng))
     }
 }
 
-impl Rand for XorShiftRng1024 {
-    fn rand<R: Rng>(rng: &mut R) -> XorShiftRng1024 {
-        XorShiftRng1024::from_seed(generate_seed_1024(rng))
+impl Rand for XorShift1024Rng {
+    fn rand<R: Rng>(rng: &mut R) -> XorShift1024Rng {
+        XorShift1024Rng::from_seed(generate_seed_1024(rng))
     }
 }
