@@ -2,6 +2,10 @@ extern crate rand;
 
 use rand::{Rng, SeedableRng, Rand};
 
+mod aes;
+
+pub use aes::AesRng;
+
 /// A splitmix random number generator.
 ///
 /// The splitmix algorithm is not suitable for cryptographic purposes, but is
@@ -152,6 +156,9 @@ impl Rng for XoroShiroRng {
     #[inline]
     fn next_u64(&mut self) -> u64 {
         let r = self.s0.wrapping_add(self.s1);
+        // O'Neill suggests to use a multiplication here instead.
+        // This seems to have the same performance.
+        // See http://www.pcg-random.org/posts/visualizing-the-heart-of-some-prngs.html.
         self.s1 ^= self.s0;
         self.s0 = self.s0.rotate_left(55) ^ self.s1 ^ (self.s1 << 14);
         self.s1 = self.s1.rotate_left(36);

@@ -1,11 +1,13 @@
 [package]
-name = "xoroshiro"
-version = "0.0.1"
 authors = ["Vinzent Steinberg <Vinzent.Steinberg@gmail.com>"]
-license = "MIT/Apache-2.0"
-repository = "https://github.com/vks/xoroshiro"
 description = "Rust implementation of the Xoroshiro+ random number generator"
 keywords = ["random", "rng"]
+license = "MIT/Apache-2.0"
+name = "xoroshiro"
+repository = "https://github.com/vks/xoroshiro"
+version = "0.0.1"
 
 [dependencies]
+byteorder = "1"
 rand = "0.3"
+aesni = "0.1"
