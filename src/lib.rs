@@ -41,10 +41,10 @@ impl Rng for SplitMixRng {
 
     #[inline]
     fn next_u64(&mut self) -> u64 {
-        self.x += 0x9e3779b97f4a7c15;
+        self.x = self.x.wrapping_add(0x9e3779b97f4a7c15);
         let mut z = self.x;
-        z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
-        z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
+        z = (z ^ (z >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94d049bb133111eb);
         return z ^ (z >> 31);
     }
 }
@@ -109,6 +109,21 @@ impl XoroShiroRng128 {
     ///
     /// This can be used to generate 2^64 non-overlapping subsequences for
     /// parallel computations.
+    ///
+    /// ```
+    /// # extern crate rand;
+    /// # extern crate xoroshiro;
+    /// # fn main() {
+    /// use rand::SeedableRng;
+    /// use xoroshiro::XoroShiroRng128;
+    ///
+    /// let rng1 = XoroShiroRng128::from_seed(0);
+    /// let mut rng2 = rng1.clone();
+    /// rng2.jump();
+    /// let mut rng3 = rng2.clone();
+    /// rng3.jump();
+    /// # }
+    /// ```
     pub fn jump(&mut self) {
         const JUMP: [u64; 2] = [0x8a5cd789635d2dff, 0x121fd2155c472f96];
         let mut s0 = 0;
@@ -225,6 +240,21 @@ impl XorShiftRng1024 {
     ///
     /// This can be used to generate 2^512 non-overlapping subsequences for
     /// parallel computations.
+    ///
+    /// ```
+    /// # extern crate rand;
+    /// # extern crate xoroshiro;
+    /// # fn main() {
+    /// use rand::SeedableRng;
+    /// use xoroshiro::XorShiftRng1024;
+    ///
+    /// let rng1 = XorShiftRng1024::from_seed(0);
+    /// let mut rng2 = rng1.clone();
+    /// rng2.jump();
+    /// let mut rng3 = rng2.clone();
+    /// rng3.jump();
+    /// # }
+    /// ```
     pub fn jump(&mut self) {
         const JUMP: [u64; 16] = [0x84242f96eca9c41d,
             0xa3c65b8776f96855, 0x5b34a39f070b5837, 0x4489affce4f31a1e,
