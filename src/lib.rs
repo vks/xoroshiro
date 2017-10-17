@@ -1,6 +1,10 @@
 extern crate rand;
+extern crate byteorder;
+
+use std::io::Write;
 
 use rand::{Rng, SeedableRng, Rand};
+use byteorder::{LittleEndian, ByteOrder};
 
 /// A splitmix random number generator.
 ///
@@ -46,6 +50,19 @@ impl Rng for SplitMixRng {
         z = (z ^ (z >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
         z = (z ^ (z >> 27)).wrapping_mul(0x94d049bb133111eb);
         return z ^ (z >> 31);
+    }
+
+    #[inline]
+    fn fill_bytes(&mut self, mut dest: &mut [u8]) {
+        let mut to_write = dest.len();
+        let mut buf = [0; 64 / 8];
+        while to_write > 0 {
+            LittleEndian::write_u64(&mut buf, self.next_u64());
+            match dest.write(&buf) {
+                Ok(n) => to_write -= n,
+                Err(e) => panic!("SplitMixRng::fill_bytes failed: {}", e),
+            }
+        }
     }
 }
 
@@ -159,6 +176,19 @@ impl Rng for XoroShiroRng {
         self.s0 = self.s0.rotate_left(55) ^ self.s1 ^ (self.s1 << 14);
         self.s1 = self.s1.rotate_left(36);
         r
+    }
+
+    #[inline]
+    fn fill_bytes(&mut self, mut dest: &mut [u8]) {
+        let mut to_write = dest.len();
+        let mut buf = [0; 64 / 8];
+        while to_write > 0 {
+            LittleEndian::write_u64(&mut buf, self.next_u64());
+            match dest.write(&buf) {
+                Ok(n) => to_write -= n,
+                Err(e) => panic!("XoroShiroRng::fill_bytes failed: {}", e),
+            }
+        }
     }
 }
 
@@ -299,6 +329,19 @@ impl Rng for XorShift1024Rng {
         s1 ^= s1 << 31;
         self.s[self.p] = s1 ^ s0 ^ (s1 >> 11) ^ (s0 >> 30);
         self.s[self.p].wrapping_mul(0x9e3779b97f4a7c13)
+    }
+
+    #[inline]
+    fn fill_bytes(&mut self, mut dest: &mut [u8]) {
+        let mut to_write = dest.len();
+        let mut buf = [0; 64 / 8];
+        while to_write > 0 {
+            LittleEndian::write_u64(&mut buf, self.next_u64());
+            match dest.write(&buf) {
+                Ok(n) => to_write -= n,
+                Err(e) => panic!("XorShift1024Rng::fill_bytes failed: {}", e),
+            }
+        }
     }
 }
 
