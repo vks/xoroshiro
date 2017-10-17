@@ -104,6 +104,27 @@ impl XoroShiroRng {
             s1: 0x97830e05113ba7bb,
         }
     }
+
+    /// Jump forward, equivalently to 2^64 calls to `next_u64()`.
+    ///
+    /// This can be used to generate 2^64 non-overlapping subsequences for
+    /// parallel computations.
+    pub fn jump(&mut self) {
+        const JUMP: [u64; 2] = [0x8a5cd789635d2dff, 0x121fd2155c472f96];
+        let mut s0 = 0;
+        let mut s1 = 0;
+        for j in &JUMP {
+            for b in 0..64 {
+                if (j & 1 << b) != 0 {
+                    s0 ^= self.s0;
+                    s1 ^= self.s1;
+                }
+                self.next_u64();
+            }
+        }
+        self.s0 = s0;
+        self.s1 = s1;
+    }
 }
 
 impl Rng for XoroShiroRng {
