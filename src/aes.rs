@@ -4,7 +4,7 @@ extern crate byteorder;
 use std::io::Write;
 
 use rand::{Rng, SeedableRng, Rand};
-use self::aesni::Aes128;
+use self::aesni::{Aes128, check_aesni};
 use self::byteorder::{LittleEndian, ReadBytesExt};
 
 #[allow(missing_copy_implementations)]
@@ -67,4 +67,9 @@ impl Rand for AesRng {
             key: key,
         }
     }
+}
+
+#[test]
+fn test_check_aesni() {
+    assert!(check_aesni());
 }
