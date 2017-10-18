@@ -4,8 +4,8 @@ extern crate test;
 extern crate rand;
 extern crate xoroshiro;
 
-const RAND_BENCH_N: u64 = 10_000;
-const RAND_BENCH_BYTES: usize = 1_000_000;
+const RAND_BENCH_N: u64 = 100_000;
+const RAND_BENCH_BYTES: usize = 1 << 20;  // > 1_000_000
 
 use std::mem::size_of;
 use test::{black_box, Bencher};
@@ -13,8 +13,10 @@ use rand::{XorShiftRng, IsaacRng, Isaac64Rng, Rng, OsRng};
 use xoroshiro::{XoroShiroRng, SplitMixRng, XorShift1024Rng};
 
 mod aes;
+mod xoroshiro128star;
 
 use aes::AesRng;
+use xoroshiro128star::XoroShiroRng as XoroShiroStarRng;
 
 macro_rules! make_bench_u64 {
     ($name:ident, $rng:ident) => {
@@ -52,6 +54,7 @@ make_bench_u64!(rand_u64_xoroshiro, XoroShiroRng);
 make_bench_u64!(rand_u64_xorshif1024, XorShift1024Rng);
 make_bench_u64!(rand_u64_splitmix, SplitMixRng);
 make_bench_u64!(rand_u64_aes, AesRng);
+make_bench_u64!(rand_u64_xoroshirostar, XoroShiroStarRng);
 
 make_bench_bytes!(rand_bytes_xorshift, XorShiftRng);
 make_bench_bytes!(rand_bytes_isaac, IsaacRng);
@@ -60,3 +63,4 @@ make_bench_bytes!(rand_bytes_xoroshiro, XoroShiroRng);
 make_bench_bytes!(rand_bytes_xorshif1024, XorShift1024Rng);
 make_bench_bytes!(rand_bytes_splitmix, SplitMixRng);
 make_bench_bytes!(rand_bytes_aes, AesRng);
+make_bench_bytes!(rand_bytes_xoroshirostar, XoroShiroStarRng);
