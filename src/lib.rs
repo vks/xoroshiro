@@ -162,16 +162,14 @@ impl XoroShiroRng {
 impl Rng for XoroShiroRng {
     #[inline]
     fn next_u32(&mut self) -> u32 {
-        self.next_u64() as u32
-        // TODO use high bits, since the two lowest bits are weak
+        // The two lowest bits have some linear dependencies, so we use the
+        // upper bits instead.
+        self.next_u64() >> 32 as u32
     }
 
     #[inline]
     fn next_u64(&mut self) -> u64 {
         let r = self.s0.wrapping_add(self.s1);
-        // O'Neill suggests to use a multiplication here instead.
-        // This seems to have the same performance.
-        // See http://www.pcg-random.org/posts/visualizing-the-heart-of-some-prngs.html.
         self.s1 ^= self.s0;
         self.s0 = self.s0.rotate_left(55) ^ self.s1 ^ (self.s1 << 14);
         self.s1 = self.s1.rotate_left(36);
