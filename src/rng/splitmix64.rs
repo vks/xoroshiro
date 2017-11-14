@@ -1,5 +1,3 @@
-use std::io::Write;
-
 use rand::{Rng, SeedableRng, Rand};
 use byteorder::{LittleEndian, ByteOrder};
 
@@ -50,14 +48,18 @@ impl Rng for SplitMix64 {
     }
 
     #[inline]
-    fn fill_bytes(&mut self, mut dest: &mut [u8]) {
-        let mut to_write = dest.len();
-        let mut buf = [0; 64 / 8];
-        while to_write > 0 {
-            LittleEndian::write_u64(&mut buf, self.next_u64());
-            match dest.write(&buf) {
-                Ok(n) => to_write -= n,
-                Err(e) => panic!("SplitMix64::fill_bytes failed: {}", e),
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        for mut chunk in dest.chunks_mut(8) {
+            if chunk.len() == 8 {
+                LittleEndian::write_u64(&mut chunk, self.next_u64());
+            } else {
+                debug_assert!(chunk.len() < 8);
+                let r = self.next_u64();
+                let mut i = 0;
+                for v in chunk.iter_mut() {
+                    *v = (r >> 8*i) as u8;
+                    i += 1;
+                }
             }
         }
     }
