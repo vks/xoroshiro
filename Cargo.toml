@@ -1,10 +1,12 @@
 [package]
 authors = ["Vinzent Steinberg <Vinzent.Steinberg@gmail.com>"]
-description = "Rust implementation of the Xoroshiro+ random number generator"
-keywords = ["random", "rng"]
+description = "Xoroshiro128+, xorshift1024*φ and splitmix64 random number generators"
+keywords = ["rng"]
+categories = ["algorithms"]
 license = "MIT/Apache-2.0"
 name = "xoroshiro"
 repository = "https://github.com/vks/xoroshiro"
+documentation = "https://docs.rs/xoroshiro"
 version = "0.0.1"
 
 [dependencies]
