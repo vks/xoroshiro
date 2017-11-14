@@ -1,7 +1,7 @@
 # xoroshiro
 
-Rust implementation of the [Xoroshiro+](http://xoroshiro.di.unimi.it) random
-number generator.
+Rust implementation of the [xoroshiro128+, xorshift1024*φ and
+splitmix64](http://xoroshiro.di.unimi.it) random number generators.
 
 ## License
 
