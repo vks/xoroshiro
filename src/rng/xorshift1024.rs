@@ -80,7 +80,7 @@ impl XorShift1024 {
 impl Rng for XorShift1024 {
     #[inline]
     fn next_u32(&mut self) -> u32 {
-        self.next_u64() as u32
+        (self.next_u64() >> 32) as u32
     }
 
     #[inline]
