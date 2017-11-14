@@ -10,7 +10,7 @@ const RAND_BENCH_BYTES: usize = 1 << 20;  // > 1_000_000
 
 use std::mem::size_of;
 use bencher::{black_box, Bencher};
-use rand::{XorShiftRng, IsaacRng, Isaac64Rng, Rng, OsRng};
+use rand::{XorShiftRng, IsaacRng, Isaac64Rng, Rng, OsRng, ChaChaRng};
 use xoroshiro::rng::{XoroShiro128, SplitMix64, XorShift1024};
 
 #[cfg(feature = "unstable")]
@@ -51,6 +51,7 @@ macro_rules! make_bench_bytes {
 make_bench_u64!(rand_u64_xorshift, XorShiftRng);
 make_bench_u64!(rand_u64_isaac, IsaacRng);
 make_bench_u64!(rand_u64_isaac64, Isaac64Rng);
+make_bench_u64!(rand_u64_chacha, ChaChaRng);
 make_bench_u64!(rand_u64_xoroshiro, XoroShiro128);
 make_bench_u64!(rand_u64_xorshift1024, XorShift1024);
 make_bench_u64!(rand_u64_splitmix, SplitMix64);
@@ -61,6 +62,7 @@ make_bench_u64!(rand_u64_xoroshirostar, XoroShiro128Star);
 make_bench_bytes!(rand_bytes_xorshift, XorShiftRng);
 make_bench_bytes!(rand_bytes_isaac, IsaacRng);
 make_bench_bytes!(rand_bytes_isaac64, Isaac64Rng);
+make_bench_bytes!(rand_bytes_chacha, ChaChaRng);
 make_bench_bytes!(rand_bytes_xoroshiro, XoroShiro128);
 make_bench_bytes!(rand_bytes_xorshift1024, XorShift1024);
 make_bench_bytes!(rand_bytes_splitmix, SplitMix64);
@@ -73,6 +75,7 @@ benchmark_group!(benches,
     rand_u64_xorshift,
     rand_u64_isaac,
     rand_u64_isaac64,
+    rand_u64_chacha,
     rand_u64_xoroshiro,
     rand_u64_xorshift1024,
     rand_u64_splitmix,
@@ -82,6 +85,7 @@ benchmark_group!(benches,
     rand_bytes_xorshift,
     rand_bytes_isaac,
     rand_bytes_isaac64,
+    rand_bytes_chacha,
     rand_bytes_xoroshiro,
     rand_bytes_xorshift1024,
     rand_bytes_splitmix,
@@ -93,6 +97,7 @@ benchmark_group!(benches,
     rand_u64_xorshift,
     rand_u64_isaac,
     rand_u64_isaac64,
+    rand_u64_chacha,
     rand_u64_xoroshiro,
     rand_u64_xorshift1024,
     rand_u64_splitmix,
@@ -101,6 +106,7 @@ benchmark_group!(benches,
     rand_bytes_xorshift,
     rand_bytes_isaac,
     rand_bytes_isaac64,
+    rand_bytes_chacha,
     rand_bytes_xoroshiro,
     rand_bytes_xorshift1024,
     rand_bytes_splitmix,
