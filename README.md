@@ -16,8 +16,8 @@ See LICENSE-APACHE, and LICENSE-MIT for details.
 
 * Parts of the code is were taken from [this pull
   request](https://github.com/rust-lang-nursery/rand/pull/102).
-* Some of the test vectors were taken and adapted from the [xorshift crate]
-  (https://github.com/astocko/xorshift).
+* Some of the test vectors were taken and adapted from the [xorshift crate](
+  https://github.com/astocko/xorshift).
 * The [xoroshiro128 crate](https://github.com/mscharley/rust-xoroshiro128) is
   similar to this one.
 
