@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(unreadable_literal)]
 
 extern crate byteorder;
 extern crate rand;

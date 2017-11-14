@@ -1,3 +1,5 @@
+#![allow(unreadable_literal)]
+
 extern crate rand;
 extern crate xoroshiro;
 
