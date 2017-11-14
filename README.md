@@ -1,5 +1,7 @@
 # xoroshiro
 
+[![Status][status-img]][status-url]
+
 Rust implementation of the [xoroshiro128+, xorshift1024*φ and
 splitmix64](http://xoroshiro.di.unimi.it) random number generators.
 
@@ -18,3 +20,7 @@ See LICENSE-APACHE, and LICENSE-MIT for details.
   (https://github.com/astocko/xorshift).
 * The [xoroshiro128 crate](https://github.com/mscharley/rust-xoroshiro128) is
   similar to this one.
+
+
+[status-img]: https://travis-ci.org/vks/xoroshiro.svg?branch=master
+[status-url]: https://travis-ci.org/vks/xoroshiro
