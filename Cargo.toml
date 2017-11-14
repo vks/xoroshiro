@@ -7,7 +7,7 @@ license = "MIT/Apache-2.0"
 name = "xoroshiro"
 repository = "https://github.com/vks/xoroshiro"
 documentation = "https://docs.rs/xoroshiro"
-version = "0.0.1"
+version = "0.1.0"
 
 [dependencies]
 byteorder = "1"
