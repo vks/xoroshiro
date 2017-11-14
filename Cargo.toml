@@ -12,6 +12,15 @@ version = "0.1.0"
 [dependencies]
 byteorder = "1"
 rand = "0.3"
+aesni = { version = "0.1", optional = true }
 
 [dev-dependencies]
-aesni = "0.1"
+bencher = "0.1"
+
+[features]
+default = []
+unstable = ["aesni"]
+
+[[bench]]
+name = "bench"
+harness = false
