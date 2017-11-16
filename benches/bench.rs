@@ -16,10 +16,12 @@ use xoroshiro::rng::{XoroShiro128, SplitMix64, XorShift1024};
 #[cfg(feature = "unstable")]
 mod aes;
 mod xoroshiro128star;
+mod smallprng;
 
 #[cfg(feature = "unstable")]
 use aes::AesRng;
 use xoroshiro128star::XoroShiro128 as XoroShiro128Star;
+use smallprng::SmallPrng128;
 
 macro_rules! make_bench_u64 {
     ($name:ident, $rng:ident) => {
@@ -58,6 +60,7 @@ make_bench_u64!(rand_u64_splitmix, SplitMix64);
 #[cfg(feature = "unstable")]
 make_bench_u64!(rand_u64_aes, AesRng);
 make_bench_u64!(rand_u64_xoroshirostar, XoroShiro128Star);
+make_bench_u64!(rand_u64_smallprng, SmallPrng128);
 
 make_bench_bytes!(rand_bytes_xorshift, XorShiftRng);
 make_bench_bytes!(rand_bytes_isaac, IsaacRng);
@@ -69,6 +72,7 @@ make_bench_bytes!(rand_bytes_splitmix, SplitMix64);
 #[cfg(feature = "unstable")]
 make_bench_bytes!(rand_bytes_aes, AesRng);
 make_bench_bytes!(rand_bytes_xoroshirostar, XoroShiro128Star);
+make_bench_bytes!(rand_bytes_smallprng, SmallPrng128);
 
 #[cfg(feature = "unstable")]
 benchmark_group!(benches,
@@ -81,6 +85,7 @@ benchmark_group!(benches,
     rand_u64_splitmix,
     rand_u64_aes,
     rand_u64_xoroshirostar,
+    rand_u64_smallprng,
 
     rand_bytes_xorshift,
     rand_bytes_isaac,
@@ -90,7 +95,8 @@ benchmark_group!(benches,
     rand_bytes_xorshift1024,
     rand_bytes_splitmix,
     rand_bytes_aes,
-    rand_bytes_xoroshirostar
+    rand_bytes_xoroshirostar,
+    rand_bytes_smallprng
 );
 #[cfg(not(feature = "unstable"))]
 benchmark_group!(benches,
@@ -102,6 +108,7 @@ benchmark_group!(benches,
     rand_u64_xorshift1024,
     rand_u64_splitmix,
     rand_u64_xoroshirostar,
+    rand_u64_smallprng,
 
     rand_bytes_xorshift,
     rand_bytes_isaac,
@@ -110,6 +117,7 @@ benchmark_group!(benches,
     rand_bytes_xoroshiro,
     rand_bytes_xorshift1024,
     rand_bytes_splitmix,
-    rand_bytes_xoroshirostar
+    rand_bytes_xoroshirostar,
+    rand_bytes_smallprng
 );
 benchmark_main!(benches);
