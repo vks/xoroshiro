@@ -2,11 +2,9 @@ extern crate aesni;
 extern crate byteorder;
 extern crate rand;
 
-use std::io::Write;
-
 use self::rand::{Rng, SeedableRng, Rand};
 use self::aesni::Aes128;
-use self::byteorder::{LittleEndian, ReadBytesExt};
+use self::byteorder::{LittleEndian, ByteOrder};
 
 #[allow(missing_copy_implementations)]
 #[derive(Debug, Clone)]
@@ -26,19 +24,22 @@ impl Rng for AesRng {
         let AesRng { aes, mut key } = *self;
         aes.encrypt(&mut key);
         self.aes = Aes128::new(&key);
-        key.as_ref().read_u64::<LittleEndian>().unwrap()
+        LittleEndian::read_u64(&key)
     }
 
     #[inline]
-    fn fill_bytes(&mut self, mut dest: &mut [u8]) {
-        let mut to_write = dest.len();
-        while to_write > 0 {
-            let AesRng { aes, mut key } = *self;
-            aes.encrypt(&mut key);
-            self.aes = Aes128::new(&key);
-            match dest.write(&key) {
-                Ok(n) => to_write -= n,
-                Err(e) => panic!("AesRng::fill_bytes failed: {}", e),
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        for mut chunk in dest.chunks_mut(8) {
+            if chunk.len() == 8 {
+                LittleEndian::write_u64(&mut chunk, self.next_u64());
+            } else {
+                debug_assert!(chunk.len() < 8);
+                let r = self.next_u64();
+                let mut i = 0;
+                for v in chunk.iter_mut() {
+                    *v = (r >> 8*i) as u8;
+                    i += 1;
+                }
             }
         }
     }
