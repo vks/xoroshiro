@@ -5,6 +5,11 @@ use xoroshiro::rng::SplitMix64;
 
 #[allow(missing_copy_implementations)]
 #[derive(Clone)]
+/// 64-bit universal RNG by [Marsaglia and Tsang][1].
+///
+/// Generates floats directly; generating integers is inefficient.
+///
+/// [1]: https://doi.org/10.1016/j.spl.2003.11.001
 pub struct Urng64 {
     u: [f64; 98],
     c: f64,
