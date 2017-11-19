@@ -5,10 +5,9 @@ extern crate byteorder;
 extern crate rand;
 extern crate xoroshiro;
 
-use std::io::Write;
-
 use self::rand::{Rng, SeedableRng, Rand};
 use self::byteorder::{LittleEndian, ByteOrder};
+
 use self::xoroshiro::rng::SplitMix64;
 
 /// A xoroshiro128* random number generator.
@@ -45,8 +44,7 @@ impl XoroShiro128 {
 impl Rng for XoroShiro128 {
     #[inline]
     fn next_u32(&mut self) -> u32 {
-        self.next_u64() as u32
-        // TODO use high bits, since the two lowest bits are weak
+        (self.next_u64() >> 32) as u32
     }
 
     #[inline]
@@ -59,14 +57,18 @@ impl Rng for XoroShiro128 {
     }
 
     #[inline]
-    fn fill_bytes(&mut self, mut dest: &mut [u8]) {
-        let mut to_write = dest.len();
-        let mut buf = [0; 64 / 8];
-        while to_write > 0 {
-            LittleEndian::write_u64(&mut buf, self.next_u64());
-            match dest.write(&buf) {
-                Ok(n) => to_write -= n,
-                Err(e) => panic!("XoroShiro128::fill_bytes failed: {}", e),
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        for mut chunk in dest.chunks_mut(8) {
+            if chunk.len() == 8 {
+                LittleEndian::write_u64(&mut chunk, self.next_u64());
+            } else {
+                debug_assert!(chunk.len() < 8);
+                let r = self.next_u64();
+                let mut i = 0;
+                for v in chunk.iter_mut() {
+                    *v = (r >> 8*i) as u8;
+                    i += 1;
+                }
             }
         }
     }
