@@ -8,6 +8,7 @@
 
 extern crate rand;
 extern crate byteorder;
+extern crate faster;
 
 /// Pseudo-random number generators.
 pub mod rng;
