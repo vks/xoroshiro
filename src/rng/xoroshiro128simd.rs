@@ -1,4 +1,6 @@
-use rand_core::RngCore;
+use rand_core::{BlockRngCore, Error, RngCore};
+use rand_core::impls::BlockRng;
+use faster::PackedTransmute;
 use faster::vecs::u64x4;
 use byteorder::{LittleEndian, ByteOrder};
 
@@ -16,7 +18,7 @@ use super::SplitMix64;
 /// David Blackman and Sebastiano Vigna. It was adapted to use SIMD.
 #[allow(missing_copy_implementations)]
 #[derive(Debug, Clone)]
-pub struct XoroShiro128x4 {
+pub struct XoroShiro128x4Core {
     s0: u64x4,
     s1: u64x4,
 }
@@ -33,7 +35,7 @@ fn rotate_left(x: u64x4, n: u32) -> u64x4 {
     (x << n) | (x >> ((BITS - n) % BITS))
 }
 
-impl XoroShiro128x4 {
+impl XoroShiro128x4Core {
     /// Return the next random `u64x4`.
     #[inline]
     pub fn next_u64x4(&mut self) -> u64x4 {
@@ -44,13 +46,13 @@ impl XoroShiro128x4 {
         r
     }
 
-    /// Create a new `XoroShiro128x4`.
+    /// Create a new `XoroShiro128x4Core`.
     #[inline]
-    pub fn from_seed(seed: [u8; 64]) -> XoroShiro128x4 {
+    pub fn from_seed(seed: [u8; 64]) -> XoroShiro128x4Core {
         for i in 0..4 {
             assert_ne!(&seed[16*i..16*(i + 1)], &[0; 16]);
         }
-        XoroShiro128x4 {
+        XoroShiro128x4Core {
             s0: u64x4::new(
                     LittleEndian::read_u64(&seed[0..8]),
                     LittleEndian::read_u64(&seed[16..24]),
@@ -66,11 +68,11 @@ impl XoroShiro128x4 {
         }
     }
 
-    /// Create a new `XoroShiro128x4`.  This will use `SplitMix64` to fill the seed.
+    /// Create a new `XoroShiro128x4Core`.  This will use `SplitMix64` to fill the seed.
     #[inline]
-    pub fn from_seed_u64(seed: u64) -> XoroShiro128x4 {
+    pub fn from_seed_u64(seed: u64) -> XoroShiro128x4Core {
         let mut rng = SplitMix64::from_seed_u64(seed);
-        XoroShiro128x4::from_seed(generate_seed(&mut rng))
+        XoroShiro128x4Core::from_seed(generate_seed(&mut rng))
     }
 }
 
@@ -84,6 +86,66 @@ fn generate_seed<R: RngCore>(rng: &mut R) -> [u8; 64] {
         }
     }
     seed
+}
+
+impl BlockRngCore for XoroShiro128x4Core {
+    type Item = u32;
+    type Results = [u32; 8];
+
+    #[inline]
+    fn generate(&mut self, results: &mut Self::Results) {
+        let r = self.next_u64x4().be_u32s();
+        r.store(results, 0);
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct XoroShiro128x4(BlockRng<XoroShiro128x4Core>);
+
+impl XoroShiro128x4 {
+    /// Create a new `XoroShiro128x4Core`.
+    #[inline]
+    pub fn from_seed(seed: [u8; 64]) -> XoroShiro128x4 {
+        let results_empty = [0; 8];
+        XoroShiro128x4(BlockRng {
+            core: XoroShiro128x4Core::from_seed(seed),
+            index: results_empty.as_ref().len(),  // generate on first use
+            results: results_empty,
+        })
+    }
+
+    /// Create a new `XoroShiro128x4`.  This will use `SplitMix64` to fill the seed.
+    #[inline]
+    pub fn from_seed_u64(seed: u64) -> XoroShiro128x4 {
+        let results_empty = [0; 8];
+        XoroShiro128x4(BlockRng {
+            core: XoroShiro128x4Core::from_seed_u64(seed),
+            index: results_empty.as_ref().len(),  // generate on first use
+            results: results_empty,
+        })
+    }
+}
+
+impl RngCore for XoroShiro128x4 {
+    #[inline(always)]
+    fn next_u32(&mut self) -> u32 {
+        self.0.next_u32()
+    }
+
+    #[inline(always)]
+    fn next_u64(&mut self) -> u64 {
+        self.0.next_u64()
+    }
+
+    #[inline]
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        self.0.fill_bytes(dest);
+    }
+
+    #[inline]
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
+        self.0.try_fill_bytes(dest)
+    }
 }
 
 #[test]
@@ -101,7 +163,7 @@ fn test_vs_non_simd() {
     LittleEndian::write_u64(&mut seed[48..56], 6);
     LittleEndian::write_u64(&mut seed[56..64], 7);
 
-    let mut rng_simd = XoroShiro128x4::from_seed(seed);
+    let mut rng_simd = XoroShiro128x4Core::from_seed(seed);
 
     fn xoroshiro_from_slice(slice: &[u8]) -> XoroShiro128 {
         let mut seed = [0; 16];
