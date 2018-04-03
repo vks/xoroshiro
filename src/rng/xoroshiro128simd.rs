@@ -53,14 +53,14 @@ impl XoroShiro128x4 {
         XoroShiro128x4 {
             s0: u64x4::new(
                     LittleEndian::read_u64(&seed[0..8]),
-                    LittleEndian::read_u64(&seed[8..16]),
                     LittleEndian::read_u64(&seed[16..24]),
-                    LittleEndian::read_u64(&seed[24..32]),
+                    LittleEndian::read_u64(&seed[32..40]),
+                    LittleEndian::read_u64(&seed[48..56]),
                 ),
             s1: u64x4::new(
-                    LittleEndian::read_u64(&seed[32..40]),
+                    LittleEndian::read_u64(&seed[8..16]),
+                    LittleEndian::read_u64(&seed[24..32]),
                     LittleEndian::read_u64(&seed[40..48]),
-                    LittleEndian::read_u64(&seed[48..56]),
                     LittleEndian::read_u64(&seed[56..64]),
                 ),
         }
