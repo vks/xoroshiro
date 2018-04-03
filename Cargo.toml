@@ -14,16 +14,19 @@ harness = false
 name = "bench"
 
 [dependencies]
-faster = "0.4.3"
 rand_core = "0.1.0-pre.0"
 
 [dependencies.aesni]
 optional = true
-version = "0.2"
+version = "0.3"
 
 [dependencies.byteorder]
 default-features = false
 version = "1"
+
+[dependencies.faster]
+optional = true
+version = "0.4.3"
 
 [dev-dependencies]
 bencher = "0.1"
@@ -31,4 +34,4 @@ rand = "0.5.0-pre.0"
 
 [features]
 default = []
-unstable = ["aesni"]
+unstable = ["aesni", "faster"]

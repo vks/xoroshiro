@@ -2,7 +2,7 @@ extern crate aesni;
 extern crate byteorder;
 extern crate rand;
 
-use self::rand::{Rng, SeedableRng, Rand};
+use self::rand::{RngCore, SeedableRng};
 use self::aesni::Aes128;
 use self::byteorder::{LittleEndian, ByteOrder};
 
@@ -13,7 +13,7 @@ pub struct AesRng {
     key: [u8; 16],
 }
 
-impl Rng for AesRng {
+impl RngCore for AesRng {
     #[inline]
     fn next_u32(&mut self) -> u32 {
         self.next_u64() as u32
@@ -43,30 +43,22 @@ impl Rng for AesRng {
             }
         }
     }
+
+    #[inline]
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), ::rand::Error> {
+        self.fill_bytes(dest);
+        Ok(())
+    }
 }
 
-impl SeedableRng<[u8; 16]> for AesRng {
-    /// Reseed an `AesRng`.
-    fn reseed(&mut self, seed: [u8; 16]) {
-        self.aes = Aes128::new(&seed);
-        self.key = seed;
-    }
+impl SeedableRng for AesRng {
+    type Seed = [u8; 16];
 
     /// Create a new `AesRng`.
     fn from_seed(seed: [u8; 16]) -> AesRng {
         AesRng {
             aes: Aes128::new(&seed),
             key: seed,
-        }
-    }
-}
-
-impl Rand for AesRng {
-    fn rand<R: Rng>(rng: &mut R) -> AesRng {
-        let key = rng.gen();
-        AesRng {
-            aes: Aes128::new(&key),
-            key: key,
         }
     }
 }

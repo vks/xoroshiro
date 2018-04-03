@@ -1,4 +1,4 @@
-use rand_core::{BlockRngCore, Error, RngCore};
+use rand_core::{BlockRngCore, Error, RngCore, SeedableRng};
 use rand_core::impls::BlockRng;
 use faster::PackedTransmute;
 use faster::vecs::u64x4;
@@ -46,12 +46,63 @@ impl XoroShiro128x4Core {
         r
     }
 
-    /// Create a new `XoroShiro128x4Core`.
+    /// Create a new `XoroShiro128x4Core`.  This will use `SplitMix64` to fill the seed.
     #[inline]
-    pub fn from_seed(seed: [u8; 64]) -> XoroShiro128x4Core {
+    pub fn from_seed_u64(seed: u64) -> XoroShiro128x4Core {
+        let mut rng = SplitMix64::from_seed_u64(seed);
+        XoroShiro128x4Core::from_seed(XoroShiro128x4Seed::from_rng(&mut rng))
+    }
+}
+
+pub struct XoroShiro128x4Seed([u8; 64]);
+
+/// Seed for a `XoroShiro128x4` or `XoroShiro128x4Core`.
+impl XoroShiro128x4Seed {
+    #[inline]
+    /// Create a seed for a `XoroShiro128x4` or `XoroShiro128x4Core`.
+    ///
+    /// # Panics
+    /// This effectively has to seed 4 `XoroShiro128` and will panic if any of
+    /// those would be initialized with an all zero seed.
+    pub fn new(seed: [u8; 64]) -> XoroShiro128x4Seed {
         for i in 0..4 {
             assert_ne!(&seed[16*i..16*(i + 1)], &[0; 16]);
         }
+        XoroShiro128x4Seed(seed)
+    }
+
+    /// Use an RNG to generate a valid (non-zero) xoroshiro seed.
+    pub fn from_rng<R: RngCore>(rng: &mut R) -> XoroShiro128x4Seed {
+        let mut seed = [0; 64];
+        for i in 0..4 {
+            let mut s = &mut seed[i..i*16];
+            while s == [0; 16] {
+                rng.fill_bytes(&mut s);
+            }
+        }
+        XoroShiro128x4Seed(seed)
+    }
+}
+
+impl ::std::convert::AsMut<[u8]> for XoroShiro128x4Seed {
+    fn as_mut(&mut self) -> &mut [u8] {
+        &mut self.0
+    }
+}
+
+impl ::std::default::Default for XoroShiro128x4Seed {
+    fn default() -> XoroShiro128x4Seed {
+        XoroShiro128x4Seed([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63])
+    }
+}
+
+impl SeedableRng for XoroShiro128x4Core {
+    type Seed = XoroShiro128x4Seed;
+
+    /// Create a new `XoroShiro128x4Core`.
+    #[inline]
+    fn from_seed(seed: XoroShiro128x4Seed) -> XoroShiro128x4Core {
+        let seed = seed.0;
         XoroShiro128x4Core {
             s0: u64x4::new(
                     LittleEndian::read_u64(&seed[0..8]),
@@ -67,25 +118,6 @@ impl XoroShiro128x4Core {
                 ),
         }
     }
-
-    /// Create a new `XoroShiro128x4Core`.  This will use `SplitMix64` to fill the seed.
-    #[inline]
-    pub fn from_seed_u64(seed: u64) -> XoroShiro128x4Core {
-        let mut rng = SplitMix64::from_seed_u64(seed);
-        XoroShiro128x4Core::from_seed(generate_seed(&mut rng))
-    }
-}
-
-/// Use an RNG to generate a valid (non-zero) xoroshiro seed.
-fn generate_seed<R: RngCore>(rng: &mut R) -> [u8; 64] {
-    let mut seed = [0; 64];
-    for i in 0..4 {
-        let mut s = &mut seed[i..i*16];
-        while s == [0; 16] {
-            rng.fill_bytes(&mut s);
-        }
-    }
-    seed
 }
 
 impl BlockRngCore for XoroShiro128x4Core {
@@ -103,17 +135,6 @@ impl BlockRngCore for XoroShiro128x4Core {
 pub struct XoroShiro128x4(BlockRng<XoroShiro128x4Core>);
 
 impl XoroShiro128x4 {
-    /// Create a new `XoroShiro128x4Core`.
-    #[inline]
-    pub fn from_seed(seed: [u8; 64]) -> XoroShiro128x4 {
-        let results_empty = [0; 8];
-        XoroShiro128x4(BlockRng {
-            core: XoroShiro128x4Core::from_seed(seed),
-            index: results_empty.as_ref().len(),  // generate on first use
-            results: results_empty,
-        })
-    }
-
     /// Create a new `XoroShiro128x4`.  This will use `SplitMix64` to fill the seed.
     #[inline]
     pub fn from_seed_u64(seed: u64) -> XoroShiro128x4 {
@@ -148,6 +169,18 @@ impl RngCore for XoroShiro128x4 {
     }
 }
 
+impl SeedableRng for XoroShiro128x4 {
+    type Seed = <XoroShiro128x4Core as SeedableRng>::Seed;
+
+    fn from_seed(seed: Self::Seed) -> Self {
+        XoroShiro128x4(BlockRng::<XoroShiro128x4Core>::from_seed(seed))
+    }
+
+    fn from_rng<R: RngCore>(rng: R) -> Result<Self, Error> {
+        BlockRng::<XoroShiro128x4Core>::from_rng(rng).map(|rng| XoroShiro128x4(rng))
+    }
+}
+
 #[test]
 fn test_vs_non_simd() {
     use ::rand_core::SeedableRng;
@@ -163,7 +196,8 @@ fn test_vs_non_simd() {
     LittleEndian::write_u64(&mut seed[48..56], 6);
     LittleEndian::write_u64(&mut seed[56..64], 7);
 
-    let mut rng_simd = XoroShiro128x4Core::from_seed(seed);
+    let mut rng_simd = XoroShiro128x4Core::from_seed(
+        XoroShiro128x4Seed::new(seed));
 
     fn xoroshiro_from_slice(slice: &[u8]) -> XoroShiro128 {
         let mut seed = [0; 16];

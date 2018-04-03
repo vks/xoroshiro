@@ -9,6 +9,7 @@
 
 extern crate rand_core;
 extern crate byteorder;
+#[cfg(feature = "unstable")]
 extern crate faster;
 
 /// Pseudo-random number generators.
