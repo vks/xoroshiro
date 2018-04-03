@@ -1,4 +1,5 @@
-use rand::{Rng, SeedableRng, Rand};
+use rand_core;
+use rand_core::{RngCore, SeedableRng};
 use byteorder::{LittleEndian, ByteOrder};
 
 use super::SplitMix64;
@@ -37,6 +38,11 @@ impl XoroShiro128 {
         }
     }
 
+    pub fn from_seed_u64(seed: u64) -> XoroShiro128 {
+        let mut rng = SplitMix64::from_seed_u64(seed);
+        XoroShiro128::from_rng(&mut rng).unwrap()
+    }
+
     /// Jump forward, equivalently to 2^64 calls to `next_u64()`.
     ///
     /// This can be used to generate 2^64 non-overlapping subsequences for
@@ -49,7 +55,7 @@ impl XoroShiro128 {
     /// use rand::SeedableRng;
     /// use xoroshiro::rng::XoroShiro128;
     ///
-    /// let rng1 = XoroShiro128::from_seed(0);
+    /// let rng1 = XoroShiro128::from_seed_u64(0);
     /// let mut rng2 = rng1.clone();
     /// rng2.jump();
     /// let mut rng3 = rng2.clone();
@@ -74,7 +80,7 @@ impl XoroShiro128 {
     }
 }
 
-impl Rng for XoroShiro128 {
+impl RngCore for XoroShiro128 {
     #[inline]
     fn next_u32(&mut self) -> u32 {
         // The two lowest bits have some linear dependencies, so we use the
@@ -107,55 +113,25 @@ impl Rng for XoroShiro128 {
             }
         }
     }
+
+    #[inline]
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
+        self.fill_bytes(dest);
+        Ok(())
+    }
 }
 
-impl SeedableRng<[u64; 2]> for XoroShiro128 {
-    /// Reseed an `XoroShiro128`.  This will panic if `seed` is entirely 0.
-    fn reseed(&mut self, seed: [u64; 2]) {
-        assert!(seed != [0, 0],
-            "XoroShiro128.reseed called with an all zero seed.");
-
-        self.s0 = seed[0];
-        self.s1 = seed[1];
-    }
+impl SeedableRng for XoroShiro128 {
+    type Seed = [u8; 16];
 
     /// Create a new `XoroShiro128`.  This will panic if `seed` is entirely 0.
-    fn from_seed(seed: [u64; 2]) -> XoroShiro128 {
-        assert!(seed != [0, 0],
+    fn from_seed(seed: [u8; 16]) -> XoroShiro128 {
+        assert!(seed != [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             "XoroShiro128::from_seed called with an all zero seed.");
 
         XoroShiro128 {
-            s0: seed[0],
-            s1: seed[1],
+            s0: LittleEndian::read_u64(&seed[..8]),
+            s1: LittleEndian::read_u64(&seed[8..]),
         }
-    }
-}
-
-/// Use a RNG to generate a valid (non-zero) xoroshiro seed.
-fn generate_seed_128<R: Rng>(rng: &mut R) -> [u64; 2] {
-    let mut s: [u64; 2] = rng.gen();
-    while s == [0, 0] {
-        s = rng.gen();
-    }
-    s
-}
-
-impl SeedableRng<u64> for XoroShiro128 {
-    /// Reseed an `XoroShiro128`.  This will use `SplitMix64` to fill the seed.
-    fn reseed(&mut self, seed: u64) {
-        let mut rng = SplitMix64::from_seed(seed);
-        self.reseed(generate_seed_128(&mut rng));
-    }
-
-    /// Create a new `XoroShiro128`.  This will use `SplitMix64` to fill the seed.
-    fn from_seed(seed: u64) -> XoroShiro128 {
-        let mut rng = SplitMix64::from_seed(seed);
-        XoroShiro128::from_seed(generate_seed_128(&mut rng))
-    }
-}
-
-impl Rand for XoroShiro128 {
-    fn rand<R: Rng>(rng: &mut R) -> XoroShiro128 {
-        XoroShiro128::from_seed(generate_seed_128(rng))
     }
 }

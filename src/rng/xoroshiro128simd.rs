@@ -1,5 +1,6 @@
-use rand::{Rng, SeedableRng};
+use rand_core::RngCore;
 use faster::vecs::u64x4;
+use byteorder::{LittleEndian, ByteOrder};
 
 use super::SplitMix64;
 
@@ -45,49 +46,78 @@ impl XoroShiro128x4 {
 
     /// Create a new `XoroShiro128x4`.
     #[inline]
-    pub fn from_seed(seed: [u64; 8]) -> XoroShiro128x4 {
+    pub fn from_seed(seed: [u8; 64]) -> XoroShiro128x4 {
         for i in 0..4 {
-            assert_ne!(&seed[(2*i)..(2*i + 2)], &[0, 0]);
+            assert_ne!(&seed[16*i..16*(i + 1)], &[0; 16]);
         }
         XoroShiro128x4 {
-            s0: u64x4::new(seed[0], seed[2], seed[4], seed[6]),
-            s1: u64x4::new(seed[1], seed[3], seed[5], seed[7]),
+            s0: u64x4::new(
+                    LittleEndian::read_u64(&seed[0..8]),
+                    LittleEndian::read_u64(&seed[8..16]),
+                    LittleEndian::read_u64(&seed[16..24]),
+                    LittleEndian::read_u64(&seed[24..32]),
+                ),
+            s1: u64x4::new(
+                    LittleEndian::read_u64(&seed[32..40]),
+                    LittleEndian::read_u64(&seed[40..48]),
+                    LittleEndian::read_u64(&seed[48..56]),
+                    LittleEndian::read_u64(&seed[56..64]),
+                ),
         }
     }
 
     /// Create a new `XoroShiro128x4`.  This will use `SplitMix64` to fill the seed.
     #[inline]
     pub fn from_seed_u64(seed: u64) -> XoroShiro128x4 {
-        let mut rng = SplitMix64::from_seed(seed);
+        let mut rng = SplitMix64::from_seed_u64(seed);
         XoroShiro128x4::from_seed(generate_seed(&mut rng))
     }
 }
 
 /// Use an RNG to generate a valid (non-zero) xoroshiro seed.
-fn generate_seed<R: Rng>(rng: &mut R) -> [u64; 8] {
-    let mut seed = [0; 8];
+fn generate_seed<R: RngCore>(rng: &mut R) -> [u8; 64] {
+    let mut seed = [0; 64];
     for i in 0..4 {
-        let mut s: [u64; 2] = rng.gen();
-        while s == [0, 0] {
-            s = rng.gen();
+        let mut s = &mut seed[i..i*16];
+        while s == [0; 16] {
+            rng.fill_bytes(&mut s);
         }
-        seed[2*i] = s[0];
-        seed[2*i + 1] = s[1];
     }
     seed
 }
 
 #[test]
 fn test_vs_non_simd() {
+    use ::rand_core::SeedableRng;
     use super::XoroShiro128;
-    let seed = [0, 1, 2, 3, 4, 5, 6, 7];
+
+    let mut seed = [0; 64];
+    LittleEndian::write_u64(&mut seed[0..8], 0);
+    LittleEndian::write_u64(&mut seed[8..16], 1);
+    LittleEndian::write_u64(&mut seed[16..24], 2);
+    LittleEndian::write_u64(&mut seed[24..32], 3);
+    LittleEndian::write_u64(&mut seed[32..40], 4);
+    LittleEndian::write_u64(&mut seed[40..48], 5);
+    LittleEndian::write_u64(&mut seed[48..56], 6);
+    LittleEndian::write_u64(&mut seed[56..64], 7);
+
     let mut rng_simd = XoroShiro128x4::from_seed(seed);
+
+    fn xoroshiro_from_slice(slice: &[u8]) -> XoroShiro128 {
+        let mut seed = [0; 16];
+        for (x, y) in slice.iter().zip(seed.iter_mut()) {
+            *y = *x;
+        }
+        XoroShiro128::from_seed(seed)
+    }
+
     let mut rngs = [
-        XoroShiro128::from_seed([seed[0], seed[1]]),
-        XoroShiro128::from_seed([seed[2], seed[3]]),
-        XoroShiro128::from_seed([seed[4], seed[5]]),
-        XoroShiro128::from_seed([seed[6], seed[7]]),
+        xoroshiro_from_slice(&seed[0..16]),
+        xoroshiro_from_slice(&seed[16..32]),
+        xoroshiro_from_slice(&seed[32..48]),
+        xoroshiro_from_slice(&seed[48..64]),
     ];
+
     let r_simd = rng_simd.next_u64x4();
     let rs = [
         rngs[0].next_u64(),

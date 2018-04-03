@@ -1,4 +1,5 @@
-use rand::{Rng, SeedableRng, Rand};
+use rand_core;
+use rand_core::{RngCore, SeedableRng};
 use byteorder::{LittleEndian, ByteOrder};
 
 /// A splitmix random number generator.
@@ -30,9 +31,15 @@ impl SplitMix64 {
             x: 0,
         }
     }
+
+    pub fn from_seed_u64(seed: u64) -> SplitMix64 {
+        let mut x = [0; 8];
+        LittleEndian::write_u64(&mut x, seed);
+        SplitMix64::from_seed(x)
+    }
 }
 
-impl Rng for SplitMix64 {
+impl RngCore for SplitMix64 {
     #[inline]
     fn next_u32(&mut self) -> u32 {
         self.next_u64() as u32
@@ -63,26 +70,21 @@ impl Rng for SplitMix64 {
             }
         }
     }
+
+    #[inline]
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
+        self.fill_bytes(dest);
+        Ok(())
+    }
 }
 
-impl SeedableRng<u64> for SplitMix64 {
-    /// Reseed a `SplitMix64`.
-    fn reseed(&mut self, seed: u64) {
-        self.x = seed;
-    }
+impl SeedableRng for SplitMix64 {
+    type Seed = [u8; 8];
 
     /// Create a new `SplitMix64`.
-    fn from_seed(seed: u64) -> SplitMix64 {
+    fn from_seed(seed: [u8; 8]) -> SplitMix64 {
         SplitMix64 {
-            x: seed,
-        }
-    }
-}
-
-impl Rand for SplitMix64 {
-    fn rand<R: Rng>(rng: &mut R) -> SplitMix64 {
-        SplitMix64 {
-            x: rng.gen(),
+            x: LittleEndian::read_u64(&seed),
         }
     }
 }

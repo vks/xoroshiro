@@ -4,7 +4,7 @@
 extern crate rand;
 extern crate xoroshiro;
 
-use rand::{Rng, SeedableRng};
+use rand::{Rng, RngCore};
 use xoroshiro::rng::{XoroShiro128, XorShift1024};
 
 #[test]
@@ -63,7 +63,7 @@ fn xoroshiro128_sm64_seed() {
         9961210433054140615
     ];
 
-    let mut rng = XoroShiro128::from_seed(seed);
+    let mut rng = XoroShiro128::from_seed_u64(seed);
     for (i, &j) in rng.gen_iter::<u64>().zip(expected.iter()) {
         assert_eq!(i, j);
     }
@@ -125,7 +125,7 @@ fn xorshift1024_sm64_seed() {
         5995275849294465096,
     ];
 
-    let mut rng = XorShift1024::from_seed(seed);
+    let mut rng = XorShift1024::from_seed_u64(seed);
     for (i, &j) in rng.gen_iter::<u64>().zip(expected.iter()) {
         assert_eq!(i, j);
     }
@@ -135,7 +135,7 @@ fn xorshift1024_sm64_seed() {
 #[test]
 fn xoroshiro128_sm64_seed_jumps() {
     let seed: u64 = 1477780685585184119;
-    let mut rng = xoroshiro::rng::SplitMix64::from_seed(seed);
+    let mut rng = xoroshiro::rng::SplitMix64::from_seed_u64(seed);
     for _ in 0..2 {
         println!("{}ul,", rng.next_u64());
     }
@@ -192,7 +192,7 @@ fn xoroshiro128_sm64_seed_jumps() {
         5335768027764772758,
     ];
 
-    let mut rng = XoroShiro128::from_seed(seed);
+    let mut rng = XoroShiro128::from_seed_u64(seed);
     for _ in 0..10 {
         rng.jump();
     }
@@ -257,7 +257,7 @@ fn xorshift1024_sm64_seed_jumps() {
         5960192554190587011,
     ];
 
-    let mut rng = XorShift1024::from_seed(seed);
+    let mut rng = XorShift1024::from_seed_u64(seed);
     for _ in 0..10 {
         rng.jump();
     }

@@ -15,7 +15,7 @@ name = "bench"
 
 [dependencies]
 faster = "0.4.3"
-rand = "0.4"
+rand_core = "0.1.0-pre.0"
 
 [dependencies.aesni]
 optional = true
@@ -27,6 +27,7 @@ version = "1"
 
 [dev-dependencies]
 bencher = "0.1"
+rand = "0.5.0-pre.0"
 
 [features]
 default = []

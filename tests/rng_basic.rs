@@ -1,11 +1,17 @@
 #![allow(unknown_lints)]
 #![allow(unreadable_literal)]
 
+extern crate byteorder;
 extern crate rand;
 extern crate xoroshiro;
 
+use byteorder::{ByteOrder, LittleEndian};
 use rand::{Rng, SeedableRng};
-use xoroshiro::rng::{SplitMix64, XoroShiro128, XorShift1024};
+use xoroshiro::rng::{
+    SplitMix64,
+    XoroShiro128,
+    XorShift1024, XorShift1024Seed
+};
 
 #[test]
 fn splitmix64() {
@@ -63,7 +69,7 @@ fn splitmix64() {
         15419692541594102413,
     ];
 
-    let mut rng = SplitMix64::from_seed(seed);
+    let mut rng = SplitMix64::from_seed_u64(seed);
     for (i, &j) in rng.gen_iter::<u64>().zip(expected.iter()) {
         assert_eq!(i, j);
     }
@@ -71,7 +77,11 @@ fn splitmix64() {
 
 #[test]
 fn xoroshiro128() {
-    let seed: u64 = 1477776328140003287;
+    let seed_u64: u64 = 1477776328140003287;
+    let mut seed = [0; 16];
+    for i in 0..2 {
+        LittleEndian::write_u64(&mut seed[i*8..(i + 1)*8], seed_u64);
+    }
     let expected: Vec<u64> = vec![
         2955552656280006574,
         16972449677822927371,
@@ -125,7 +135,7 @@ fn xoroshiro128() {
         6715575954761285513
     ];
 
-    let mut rng = XoroShiro128::from_seed([seed, seed]);
+    let mut rng = XoroShiro128::from_seed(seed);
     for (i, &j) in rng.gen_iter::<u64>().zip(expected.iter()) {
         assert_eq!(i, j);
     }
@@ -133,7 +143,11 @@ fn xoroshiro128() {
 
 #[test]
 fn xorshift1024() {
-    let seed: u64 = 1477777179826044140;
+    let seed_u64: u64 = 1477777179826044140;
+    let mut seed = [0; 128];
+    for i in 0..16 {
+        LittleEndian::write_u64(&mut seed[i*8..(i + 1)*8], seed_u64);
+    }
     let expected: Vec<u64> = vec![
         10769172823028838824,
         158748326494619566,
@@ -187,8 +201,26 @@ fn xorshift1024() {
         13964547572092459124,
     ];
 
-    let mut rng = XorShift1024::from_seed([seed; 16]);
+    let mut rng = XorShift1024::from_seed(XorShift1024Seed(seed));
     for (i, &j) in rng.gen_iter::<u64>().zip(expected.iter()) {
         assert_eq!(i, j);
     }
+}
+
+#[test]
+fn bool_xoroshiro() {
+    let mut rng = XoroShiro128::from_seed_u64(1234);
+    let mut trues = 0;
+    let mut falses = 0;
+    for _ in 0..10000000 {
+        let b: bool = rng.gen();
+        if b {
+            trues += 1;
+        } else {
+            falses += 1;
+        }
+    }
+    let ratio = (trues as f64) / ((trues + falses) as f64);
+    println!("{}", ratio);
+    assert!((ratio - 0.5) < 1e-4);
 }
