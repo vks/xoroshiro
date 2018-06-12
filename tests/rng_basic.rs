@@ -7,6 +7,7 @@ extern crate xoroshiro;
 
 use byteorder::{ByteOrder, LittleEndian};
 use rand::{Rng, SeedableRng};
+use rand::distributions::Standard;
 use xoroshiro::rng::{
     SplitMix64,
     XoroShiro128,
@@ -70,7 +71,7 @@ fn splitmix64() {
     ];
 
     let mut rng = SplitMix64::from_seed_u64(seed);
-    for (i, &j) in rng.gen_iter::<u64>().zip(expected.iter()) {
+    for (i, &j) in rng.sample_iter::<u64, _>(&Standard).zip(expected.iter()) {
         assert_eq!(i, j);
     }
 }
@@ -136,7 +137,7 @@ fn xoroshiro128() {
     ];
 
     let mut rng = XoroShiro128::from_seed(seed);
-    for (i, &j) in rng.gen_iter::<u64>().zip(expected.iter()) {
+    for (i, &j) in rng.sample_iter::<u64, _>(&Standard).zip(expected.iter()) {
         assert_eq!(i, j);
     }
 }
@@ -202,7 +203,7 @@ fn xorshift1024() {
     ];
 
     let mut rng = XorShift1024::from_seed(XorShift1024Seed(seed));
-    for (i, &j) in rng.gen_iter::<u64>().zip(expected.iter()) {
+    for (i, &j) in rng.sample_iter::<u64, _>(&Standard).zip(expected.iter()) {
         assert_eq!(i, j);
     }
 }
