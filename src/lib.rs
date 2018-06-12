@@ -1,3 +1,6 @@
+//! **This crate is deprecated in favor of the [xoshiro
+//! crate](https://crates.io/crates/xoshiro).**
+//!
 //! This crate provides the [xoroshiro128+, xorshift1024*φ and
 //! splitmix64](http://xoroshiro.di.unimi.it) random number generators.
 //!
@@ -9,8 +12,6 @@
 
 extern crate rand_core;
 extern crate byteorder;
-#[cfg(feature = "unstable")]
-extern crate faster;
 
 /// Pseudo-random number generators.
 pub mod rng;

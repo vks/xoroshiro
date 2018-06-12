@@ -1,5 +1,7 @@
 # xoroshiro
 
+**The crate is deprecated in favor of the [xoshiro] crate.**
+
 [![Status][status-img]][status-url]
 
 Rust implementation of the [xoroshiro128+, xorshift1024*φ and
@@ -24,3 +26,4 @@ See LICENSE-APACHE, and LICENSE-MIT for details.
 
 [status-img]: https://travis-ci.org/vks/xoroshiro.svg?branch=master
 [status-url]: https://travis-ci.org/vks/xoroshiro
+[xoshiro]: https://github.com/vks/xoshiro
