@@ -8,30 +8,19 @@ license = "MIT/Apache-2.0"
 name = "xoroshiro"
 repository = "https://github.com/vks/xoroshiro"
 version = "0.2.0"
+autobenches = false
 
 [[bench]]
 harness = false
 name = "bench"
 
 [dependencies]
-rand_core = "0.1.0-pre.0"
-
-[dependencies.aesni]
-optional = true
-version = "0.3"
+rand_core = "0.2"
 
 [dependencies.byteorder]
 default-features = false
 version = "1"
 
-[dependencies.faster]
-optional = true
-version = "0.4.3"
-
 [dev-dependencies]
 bencher = "0.1"
-rand = "0.5.0-pre.0"
-
-[features]
-default = []
-unstable = ["aesni", "faster"]
+rand = "0.5"

@@ -13,7 +13,7 @@ use std::mem::size_of;
 use bencher::{black_box, Bencher};
 use rand::{SeedableRng, Rng, RngCore};
 use rand::{XorShiftRng, IsaacRng, Isaac64Rng, OsRng, ChaChaRng};
-use xoroshiro::rng::{XoroShiro128, XoroShiro128x4, SplitMix64, XorShift1024};
+use xoroshiro::rng::{XoroShiro128, SplitMix64, XorShift1024};
 
 //#[cfg(feature = "unstable")]
 //mod aes;
