@@ -1,6 +1,6 @@
 # xoroshiro
 
-**The crate is deprecated in favor of the [xoshiro] crate.**
+**The crate is deprecated in favor of the [rand_xoshiro] crate.**
 
 [![Status][status-img]][status-url]
 
@@ -26,4 +26,4 @@ See LICENSE-APACHE, and LICENSE-MIT for details.
 
 [status-img]: https://travis-ci.org/vks/xoroshiro.svg?branch=master
 [status-url]: https://travis-ci.org/vks/xoroshiro
-[xoshiro]: https://github.com/vks/xoshiro
+[rand_xoshiro]: https://github.com/rust-random/rngs
